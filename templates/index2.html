@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видео контроль</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .media-container {
+            display: flex;
+            margin-top: 20px;
+        }
+        .media {
+            max-width: 600px;
+            margin-right: 20px;
+        }
+        .text-fields {
+            display: flex;
+            flex-direction: column;
+        }
+        .text-fields input {
+            margin-bottom: 10px;
+            padding: 5px;
+            font-size: 16px;
+        }
+        .button-group {
+            margin-top: 20px;
+        }
+        .button-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Видео контроль</h1>
+    <select id="mediaSelect">
+        <option value="">--Выбрать агрегат--</option>
+        <option value="/static/test.mp4">Агрегат 1</option>
+        <option value="/static/2.jpeg">Агрегат 2</option>
+        <option value="/static/1.mp4">Агрегат 3</option>
+        <option value="/static/3.jpeg">Агрегат 4</option>
+        <option value="/static/4.mp4">Агрегат 5</option>
+        <option value="/static/5.mp4">Агрегат 6</option>
+    </select>
+
+    <div class="media-container" id="mediaContainer">
+        <div class="media" id="mediaDisplay"></div>
+        <table>
+            <tr>
+                <td>Дата</td>
+                <td>
+                    <div class="text-fields">
+                        <input type="date" id="dateField" placeholder="Date">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Время</td>
+                <td>
+                    <div class="text-fields">
+                        <input type="time" id="timeField" placeholder="Time">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Номер партии</td>
+                <td>
+                    <div class="text-fields">
+                        <input type="text" id="batchNumberField" placeholder="Batch Number">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Номер пакета</td>
+                <td>
+                    <div class="text-fields">
+                        <input type="text" id="packetNumberField" placeholder="Packet Number">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Кол-во труб</td>
+                <td>
+                    <div class="text-fields">
+                        <input type="text" id="lenCirclesField" placeholder="Кол-во труб">
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+    </div>
+
+    <div class="button-group">
+        <!-- <select name="mode" id="cv_mode">
+            <option value="classic">Классичесий метод</option>
+            <option value="neuro">Нейросеть</option>
+        </select> -->
+        <button onclick="submitForm()">Подсчитать трубы</button>
+        <button onclick="createReport()">Создать отчет</button>
+        
+    </div>
+    <div class="button-group">
+        <button onclick="redirectToSearch()">Перейти к поиску</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('mediaSelect').addEventListener('change', function() {
+        const selectedValue = this.value;
+        const mediaDisplay = document.getElementById('mediaDisplay');
+        mediaDisplay.innerHTML = '';
+
+        if (selectedValue) {
+            if (selectedValue.endsWith('.jpeg')) {
+                const img = document.createElement('img');
+                img.src = selectedValue;
+                img.alt = selectedValue;
+                img.style.maxWidth = '100%';
+                mediaDisplay.appendChild(img);
+            } else if (selectedValue.endsWith('.mp4')) {
+                const video = document.createElement('video');
+                video.src = selectedValue;
+                video.controls = true;
+                video.style.maxWidth = '100%';
+                mediaDisplay.appendChild(video);
+            } else if (selectedValue.endsWith('.avi')) {
+                const video = document.createElement('video');
+                video.src = selectedValue;
+                video.controls = true;
+                video.style.maxWidth = '100%';
+                mediaDisplay.appendChild(video);
+            }
+        }
+    });
+
+    function setCurrentDateTime() {
+        const now = new Date();
+        const dateField = document.getElementById('dateField');
+        const timeField = document.getElementById('timeField');
+
+        dateField.value = now.toISOString().split('T')[0];
+        timeField.value = now.toTimeString().split(' ')[0].slice(0, 5);
+    }
+
+    function populateBatchAndPacketNumbers() {
+        // fetch('/static/numbers.json')
+        fetch('/get_numbers')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('batchNumberField').value = data.batch_number;
+                document.getElementById('packetNumberField').value = data.package_number;
+                console.log(data.package_number)
+            })
+            .catch(error => {
+                console.error('Error fetching batch and packet numbers:', error);
+            });
+    }
+
+    function submitForm() {
+        const selectedMedia = document.getElementById('mediaSelect').value;
+        const date = document.getElementById('dateField').value;
+        const time = document.getElementById('timeField').value;
+        const batch_number = document.getElementById('batchNumberField').value;
+        const packet_number = document.getElementById('packetNumberField').value;
+
+        // console.log("Selected Media:", selectedMedia);
+        // console.log("Date:", date);
+        // console.log("Time:", time);
+        // console.log("Batch Number:", batch_number);
+        // console.log("Packet Number:", packet_number);
+
+        if (selectedMedia && date && time && batch_number && packet_number) {
+            const formData = new FormData();
+            formData.append('media', selectedMedia);
+            formData.append('date', date);
+            formData.append('time', time);
+            formData.append('batch_number', batch_number);
+            formData.append('packet_number', packet_number);
+            // console.log("FormData content:");
+// formData.forEach(function(value, key){
+//     console.log(key, value);
+// });
+            
+            fetch('/predict_yolo', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+        
+            .then(data => {
+                if (data.status === 'success') {
+                    
+                    document.getElementById('lenCirclesField').value = data.len_circles;
+                    if (selectedMedia.endsWith('.jpeg')) {
+                        const processedImg = document.createElement('img');
+                        processedImg.src = data.processed_image_url;
+                        processedImg.alt = 'Processed Image';
+                        processedImg.style.maxWidth = '100%';
+                        document.getElementById('mediaDisplay').innerHTML = '';
+                        document.getElementById('mediaDisplay').appendChild(processedImg);
+                    } else if (selectedMedia.endsWith('.mp4')) {
+                        const processedImg = document.createElement('video');
+                        processedImg.src = data.processed_image_url;
+                        processedImg.alt = 'Processed Image';
+                        processedImg.style.maxWidth = '100%';
+                        document.getElementById('mediaDisplay').innerHTML = '';
+                        document.getElementById('mediaDisplay').appendChild(processedImg);
+                    } else {
+                        alert('Video processing is not supported.');
+                    }
+                } else {
+                    alert('Failed to process the media');
+                }
+            });
+        } else {
+            alert('Проверьте все поля.');
+        }
+    }
+
+//     function createReport() {
+//         const selectedMedia = document.getElementById('mediaSelect').value;
+//         const date = document.getElementById('dateField').value;
+//         const time = document.getElementById('timeField').value;
+//         const batch_number = document.getElementById('batchNumberField').value;
+//         const packet_number = document.getElementById('packetNumberField').value;
+
+//         if (selectedMedia && date && time && batch_number && packet_number) {
+//             window.location.href = `/success?packet_number=${packet_number}`;
+//         } else {
+//             alert('Please fill in all fields.');
+//         }
+// }
+
+    function createReport() {
+        const selectedMedia = document.getElementById('mediaSelect').value;
+        const date = document.getElementById('dateField').value;
+        const time = document.getElementById('timeField').value;
+        const batch_number = document.getElementById('batchNumberField').value;
+        const packet_number = document.getElementById('packetNumberField').value;
+        const len_circles = document.getElementById('lenCirclesField').value;
+
+        if (selectedMedia && date && time && batch_number && packet_number) {
+            const formData = new FormData();
+            formData.append('media', selectedMedia);
+            formData.append('date', date);
+            formData.append('time', time);
+            formData.append('batch_number', batch_number);
+            formData.append('packet_number', packet_number);
+            
+            formData.append('len_circles', len_circles);
+            console.log(selectedMedia)
+            fetch('/report', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    
+                    
+
+                    if (selectedMedia.endsWith('.jpeg')) {
+                        const processedImg = document.createElement('img');
+                        processedImg.src = data.processed_image_url;
+                        processedImg.alt = 'Processed Image';
+                        processedImg.style.maxWidth = '100%';
+                        document.getElementById('mediaDisplay').innerHTML = '';
+                        document.getElementById('mediaDisplay').appendChild(processedImg);
+                    }
+                    // window.open('/success', '_blank');
+                    // console.log(len_circles)
+                    window.location.href = `/success?packet_number=${packet_number}&batch_number=${batch_number}&len_circles=${len_circles}`;
+                } else {
+                    alert('Некорректно заполнено поле.');
+                }
+            });
+        } else {
+            alert('Заполните все поля');
+        }
+    }
+
+    function redirectToSearch(){
+        window.location.href = '/s'
+    }
+
+    window.onload = () => {
+        setCurrentDateTime();
+        populateBatchAndPacketNumbers();
+    };
+</script>
+
+</body>
+</html>

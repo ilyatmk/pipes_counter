@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success</title>
+    <style>
+        .container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .textbox {
+            position: absolute;
+            width: 90px;
+            height: 20px;
+            top: 500px; /* Отступ сверху */
+            left: 90px; /* Отступ слева */
+        }
+        .textbox2 {
+            position: absolute;
+            width: 90px;
+            height: 21px;
+            top: 127px; /* Отступ сверху */
+            left: 127px; /* Отступ слева */
+        }
+        .textbox3 {
+            position: absolute;
+            width: 90px;
+            height: 21px;
+            top: 127px; /* Отступ сверху */
+            left: 302px; /* Отступ слева */
+        }
+
+        .buttons {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- <h1>Report successfully generated!</h1> -->
+    <div class="container">
+        <img src="{{ image_url }}" alt="Processed Image">
+        <input type="text" class="textbox"  value='{{len_circles}}'/>
+        <input type="text" class="textbox2" value='{{batch_number}}'/>
+        <input type="text" class="textbox3" value='{{packet_number}}'/>
+    </div>
+
+    <div class="buttons">
+        <button onclick="addNumbers('{{ batch_number }}', '{{ packet_number }}', 'package')">Новый пакет</button>
+        <button onclick="addNumbers('{{ batch_number }}', '{{ packet_number }}', 'batch')">Новая партия</button>
+    </div>
+    <!-- <a href="/">Back to Home</a> -->
+</body>
+</html>
+
+<script>
+    function addNumbers(batch_number, packet_number, type){
+        const formData = new FormData();
+        formData.append('batch_number', batch_number);
+        formData.append('packet_number', packet_number);
+        formData.append('action_type', type);
+        fetch('/add_numbers', {
+                method: 'POST',
+                body: formData
+            })
+        window.location.href = '/'
+    }
+
+    window.onload = () => {
+        // getNumbers();
+        // console.log('{{len_circles}}');
+        
+    };
+</script>
